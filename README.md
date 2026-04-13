@@ -5,7 +5,7 @@ A mini order allocation system built with Node.js, PostgreSQL, and Next.js. Supp
 ## Tech Stack
 
 - **Backend:** Node.js, Express.js, PostgreSQL (raw SQL)
-- **Frontend:** Next.js 14 (App Router), TypeScript, Tailwind CSS
+- **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS
 - **Auth:** JWT, bcrypt
 - **Database:** PostgreSQL (hosted on Neon)
 
@@ -77,7 +77,7 @@ psql -d your_db -f backend/db/schema.sql
 
 **orders** — stores each order with total price and status (`PENDING`, `COMPLETED`, `CANCELLED`). Linked to users via `user_id`.
 
-**order_items** — stores individual line items per order. `unit_price` is snapshotted at order time so future price changes don't affect historical orders.
+**order_items** — stores individual line items per order. 
 
 ### Relationships
 
@@ -106,7 +106,7 @@ Two users simultaneously attempt to purchase the last 5 units of a product. With
 3. User A decrements → stock = 0
 4. User B decrements → stock = -5 ← oversold
 
-### The Solution — SELECT FOR UPDATE
+### The Solution
 
 When creating an order, each product row is locked using `SELECT ... FOR UPDATE` inside a transaction:
 
@@ -128,7 +128,7 @@ This acquires a row-level lock. Any concurrent transaction attempting to read or
 
 ### Isolation Level
 
-PostgreSQL default isolation level (`READ COMMITTED`) combined with `SELECT FOR UPDATE` is sufficient for this use case. The lock ensures the second transaction always sees the committed state after the first completes.
+PostgreSQL default isolation level (`READ COMMITTED`) combined with `SELECT FOR UPDATE`. The lock ensures the second transaction always sees the committed state after the first completes.
 
 ### Transaction Scope
 
@@ -164,8 +164,6 @@ CREATE INDEX idx_products_is_deleted ON products(is_deleted);
 - `idx_order_items_product_id` — used during order cancellation to look up items by product for stock restoration.
 - `idx_products_is_deleted` — all product listings filter `WHERE is_deleted = FALSE`. Without this, deleted product filtering requires a full scan.
 
-**Note:** `users.email` has an implicit index from the `UNIQUE` constraint. `PRIMARY KEY` columns are also automatically indexed by PostgreSQL.
-
 ---
 
 ## API Reference
@@ -191,7 +189,7 @@ CREATE INDEX idx_products_is_deleted ON products(is_deleted);
 
 ---
 
-## Assumptions Made
+## Assumptions
 
 - Authentication is simple JWT — no refresh tokens, no OAuth as specified
 - Product creation is open (no admin auth) — focus was on order flow
